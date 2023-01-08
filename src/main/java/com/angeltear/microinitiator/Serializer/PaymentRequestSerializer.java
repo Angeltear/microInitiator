@@ -8,23 +8,23 @@ import com.esotericsoftware.kryo.io.Output;
 import java.io.ByteArrayInputStream;
 
 public class PaymentRequestSerializer{
+
+    //Using Kryo according to Lettuce.io recommendation - https://github.com/lettuce-io/lettuce-core/wiki/Codecs
     private Kryo kryo = new Kryo();
 
-
-    public byte[] encode(PaymentRequest codable) {
+    public byte[] encode(PaymentRequest request) {
         kryo.register(PaymentRequest.class);
         Output output = new Output(4096, Integer.MAX_VALUE - 8);
-        kryo.writeObject(output, codable);
+        kryo.writeObject(output, request);
         output.close();
         return output.toBytes();
     }
 
-    public PaymentRequest decode(byte[] codedValue) {
+    public PaymentRequest decode(byte[] inputValue) {
         kryo.register(PaymentRequest.class);
-        ByteArrayInputStream bais = new ByteArrayInputStream(codedValue);
+        ByteArrayInputStream bais = new ByteArrayInputStream(inputValue);
         Input input = new Input(bais);
-        PaymentRequest readObject = kryo.readObject(input, PaymentRequest.class);
-        return readObject;
+        return kryo.readObject(input, PaymentRequest.class);
     }
 
 
