@@ -30,6 +30,9 @@ public class HomeController {
     @Value("${requestPerClient}")
     private int allowedSimultaneousPerClient;
 
+    @Value("${requestsForQueueOverflow}")
+    private int allowedSimultaneousTotal;
+
     @PostMapping("/")
     public ResponseEntity<PaymentResponse> indexInitiator(@RequestBody @Valid PaymentRequest request) {
         RedisClient redisClient = redisConfig.getClient();
@@ -41,6 +44,22 @@ public class HomeController {
         PaymentRequestSerializer serializer = new PaymentRequestSerializer();
 
         PaymentResponse response = new PaymentResponse();
+
+        //Get total count of the queue
+        Long totalQueueCount = syncCommands.llen("appQueue".getBytes());
+        log.info("Current queue size " + totalQueueCount + ". Max allowance: " + allowedSimultaneousTotal);
+
+        //If there are more unprocessed requests than the allowed amount, decline the request to prevent excessive use of system resources.
+        if (totalQueueCount >= allowedSimultaneousTotal) {
+            log.info("Request rejected - too many unprocessed events in queue.");
+            //Set the required fields for the response.
+            response.setResult("Rejected request!");
+            response.setTimestamp(LocalDateTime.now());
+            response.setDetailedMessage("Queue has a capacity of " + allowedSimultaneousTotal + ". It's currently full. Try again later.");
+
+            connection.close();
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(response);
+        }
 
         //Get current unprocessed requests for customer by checking customer's personal list (with id as a key for the list)
         Long currentAttempts = syncCommands.llen(Long.toString(request.getClientId()).getBytes());
