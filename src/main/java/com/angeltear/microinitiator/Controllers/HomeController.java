@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -40,10 +39,10 @@ public class HomeController {
 
         //Get current unprocessed requests for customer by checking customer's personal list (with id as a key for the list)
         Long currentAttempts = syncCommands.llen(Long.toString(request.getClientId()).getBytes());
-        log.info("Current attempts for customer " + request.getClientId() +  " being processed : " + currentAttempts + ". Max allowance: " + allowedSimultaneousPerClient);
+        log.info("Current attempts for customer " + request.getClientId() + " being processed : " + currentAttempts + ". Max allowance: " + allowedSimultaneousPerClient);
 
         //If there are more unprocessed requests than the allowed, decline the request to prevent abuse.
-        if (currentAttempts >= allowedSimultaneousPerClient){
+        if (currentAttempts >= allowedSimultaneousPerClient) {
             log.info("Request rejected - too many unprocessed events for customer.");
             connection.close();
             return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body("You can only have " + allowedSimultaneousPerClient + " unprocessed payments at a time.");

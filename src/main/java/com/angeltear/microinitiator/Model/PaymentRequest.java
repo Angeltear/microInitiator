@@ -1,6 +1,5 @@
 package com.angeltear.microinitiator.Model;
 
-import jakarta.validation.Constraint;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.*;

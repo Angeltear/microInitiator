@@ -7,10 +7,10 @@ import com.esotericsoftware.kryo.io.Output;
 
 import java.io.ByteArrayInputStream;
 
-public class PaymentRequestSerializer{
+public class PaymentRequestSerializer {
 
     //Using Kryo according to Lettuce.io recommendation - https://github.com/lettuce-io/lettuce-core/wiki/Codecs
-    private Kryo kryo = new Kryo();
+    private final Kryo kryo = new Kryo();
 
     public byte[] encode(PaymentRequest request) {
         kryo.register(PaymentRequest.class);

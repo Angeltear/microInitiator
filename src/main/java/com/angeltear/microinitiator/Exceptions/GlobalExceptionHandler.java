@@ -16,22 +16,22 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     /*
-    * Basic error handling. Handle all the BAD_REQUEST responses and
-    * return the map as the body for all the bad requests.
-    * */
-  @ExceptionHandler
-  @ResponseStatus(HttpStatus.BAD_REQUEST)
-  @ResponseBody
-  Map<String,String> handleBadRequests(Exception e){
+     * Basic error handling. Handle all the BAD_REQUEST responses and
+     * return the map as the body for all the bad requests.
+     * */
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseBody
+    Map<String, String> handleBadRequests(Exception e) {
 
-      Map<String,String> response = new HashMap<>();
-      response.put("timestamp", LocalDateTime.now().toString());
-      response.put("status", "Invalid input!");
-      response.put("detailedMessage", e.getLocalizedMessage());
+        Map<String, String> response = new HashMap<>();
+        response.put("timestamp", LocalDateTime.now().toString());
+        response.put("status", "Invalid input!");
+        response.put("detailedMessage", e.getLocalizedMessage());
 
 
-      return response;
-  }
+        return response;
+    }
 
     /*
      * Basic error handling. Handle specific BAD_REQUEST responses that failed due to validation
@@ -49,7 +49,7 @@ public class GlobalExceptionHandler {
             String errorMessage = error.getDefaultMessage();
             errors.put(fieldName, errorMessage);
         });
-        Map<String,String> response = new HashMap<>();
+        Map<String, String> response = new HashMap<>();
         response.put("timestamp", LocalDateTime.now().toString());
         response.put("status", "Invalid input!");
         response.put("detailedMessage", errors.values().toString());

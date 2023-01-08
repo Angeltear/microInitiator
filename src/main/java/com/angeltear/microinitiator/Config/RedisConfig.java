@@ -12,11 +12,11 @@ public class RedisConfig {
     private final RedisClient redisClient;
 
     @Autowired
-    public RedisConfig(@Value("${redis.url}")String redisUrl) {
-        this.redisClient=RedisClient.create(redisUrl);
+    public RedisConfig(@Value("${redis.url}") String redisUrl) {
+        this.redisClient = RedisClient.create(redisUrl);
     }
 
-    public RedisClient getClient(){
+    public RedisClient getClient() {
         return redisClient;
     }
 }
