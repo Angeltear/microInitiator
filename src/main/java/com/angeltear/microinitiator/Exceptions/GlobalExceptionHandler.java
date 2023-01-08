@@ -1,6 +1,8 @@
 package com.angeltear.microinitiator.Exceptions;
 
+import com.angeltear.microinitiator.Model.PaymentResponse;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -34,14 +36,15 @@ public class GlobalExceptionHandler {
     }
 
     /*
-     * Basic error handling. Handle specific BAD_REQUEST responses that failed due to validation
-     * return the map with the constraints within the map response body for all the validation failed requests.
+     * Basic error handling. Handle specific BAD_REQUEST responses that failed due to validation.
+     * Return the response object with the constraints within the detailed message
+     * of the response body for each of the validation failed requests.
      * */
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ResponseBody
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public Map<String, String> handleValidationExceptions(
+    public ResponseEntity<PaymentResponse> handleValidationExceptions(
             MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
         ex.getBindingResult().getAllErrors().forEach((error) -> {
@@ -49,12 +52,13 @@ public class GlobalExceptionHandler {
             String errorMessage = error.getDefaultMessage();
             errors.put(fieldName, errorMessage);
         });
-        Map<String, String> response = new HashMap<>();
-        response.put("timestamp", LocalDateTime.now().toString());
-        response.put("status", "Invalid input!");
-        response.put("detailedMessage", errors.values().toString());
 
-        return response;
+        PaymentResponse response = new PaymentResponse();
+        response.setTimestamp(LocalDateTime.now());
+        response.setDetailedMessage(errors.values().toString());
+        response.setResult("Invalid input!");
+
+        return ResponseEntity.badRequest().body(response);
     }
 
 

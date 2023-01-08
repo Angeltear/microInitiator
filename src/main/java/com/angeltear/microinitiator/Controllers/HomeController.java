@@ -2,6 +2,7 @@ package com.angeltear.microinitiator.Controllers;
 
 import com.angeltear.microinitiator.Config.RedisConfig;
 import com.angeltear.microinitiator.Model.PaymentRequest;
+import com.angeltear.microinitiator.Model.PaymentResponse;
 import com.angeltear.microinitiator.Serializer.PaymentRequestSerializer;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -17,6 +18,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDateTime;
+
 @RestController
 @Slf4j
 public class HomeController {
@@ -28,7 +31,7 @@ public class HomeController {
     private int allowedSimultaneousPerClient;
 
     @PostMapping("/")
-    public ResponseEntity<String> indexInitiator(@RequestBody @Valid PaymentRequest request) {
+    public ResponseEntity<PaymentResponse> indexInitiator(@RequestBody @Valid PaymentRequest request) {
         RedisClient redisClient = redisConfig.getClient();
         log.info("Incoming request: " + request.toString());
         //Open a connection to the redis client submitting and accepting byte arrays instead of strings, since we're using custom complex objects
@@ -37,6 +40,8 @@ public class HomeController {
 
         PaymentRequestSerializer serializer = new PaymentRequestSerializer();
 
+        PaymentResponse response = new PaymentResponse();
+
         //Get current unprocessed requests for customer by checking customer's personal list (with id as a key for the list)
         Long currentAttempts = syncCommands.llen(Long.toString(request.getClientId()).getBytes());
         log.info("Current attempts for customer " + request.getClientId() + " being processed : " + currentAttempts + ". Max allowance: " + allowedSimultaneousPerClient);
@@ -44,8 +49,13 @@ public class HomeController {
         //If there are more unprocessed requests than the allowed, decline the request to prevent abuse.
         if (currentAttempts >= allowedSimultaneousPerClient) {
             log.info("Request rejected - too many unprocessed events for customer.");
+            //Set the required fields for the response.
+            response.setResult("Rejected request!");
+            response.setTimestamp(LocalDateTime.now());
+            response.setDetailedMessage("You can only have " + allowedSimultaneousPerClient + " unprocessed payments at a time.");
+
             connection.close();
-            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body("You can only have " + allowedSimultaneousPerClient + " unprocessed payments at a time.");
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(response);
         }
         //If the client has less unprocessed requests than the allowed ones, push the whole request to the main queue and the client ID to his individual queue
         else {
@@ -55,8 +65,13 @@ public class HomeController {
             log.info("Added customerID to individual queue.");
             Long element = syncCommands.llen("appQueue".getBytes());
 
+            //Set the required fields for the response.
+            response.setResult("Successful request!");
+            response.setTimestamp(LocalDateTime.now());
+            response.setDetailedMessage("Successfully added request to queue. Current queue: " + element.toString());
+
             connection.close();
-            return ResponseEntity.status(HttpStatus.OK).body("Successfully added request to queue. Current queue: " + element.toString());
+            return ResponseEntity.status(HttpStatus.OK).body(response);
         }
     }
 
