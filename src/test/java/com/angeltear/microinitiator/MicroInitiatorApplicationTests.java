@@ -1,7 +1,12 @@
 package com.angeltear.microinitiator;
 
 import com.angeltear.microinitiator.Config.RedisConfig;
+import com.angeltear.microinitiator.Model.PaymentRequest;
+import com.angeltear.microinitiator.Serializer.PaymentRequestSerializer;
 import io.lettuce.core.RedisClient;
+import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.codec.ByteArrayCodec;
 import jakarta.servlet.ServletContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -98,6 +103,21 @@ class MicroInitiatorApplicationTests {
                 .andReturn();
 
         assertEquals(HttpStatus.BAD_REQUEST.value(), mvcResult.getResponse().getStatus());
+    }
+
+    //This test adds 50 elements to the queue. Use to simulate load on the consumer microservice
+    @Test
+    public void testConsumer(){
+        RedisClient redisClient = redisConfig.getClient();
+
+        StatefulRedisConnection<byte[], byte[]> connection = redisClient.connect(new ByteArrayCodec());
+        RedisCommands<byte[], byte[]> syncCommands = connection.sync();
+
+        PaymentRequestSerializer serializer = new PaymentRequestSerializer();
+
+        for(int i=2;i<52;i++){
+            syncCommands.lpush("appQueue".getBytes(), serializer.encode(new PaymentRequest(1, i, 1)));
+        }
     }
 
 
